@@ -1,0 +1,67 @@
+version: '2'
+
+services:
+  nginx:
+    build:
+      context: ./nginx
+      dockerfile: Dockerfile
+    container_name: mihawk-nginx
+    volumes:
+      - ${APP_ROOT}:/www/public_html/apps
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf
+      - ./nginx/conf:/etc/nginx/sites-enabled
+      - ./nginx/logs:/var/log/nginx
+    depends_on:
+      - "php"
+      - "redis"
+    ports:
+      - "81:8081"
+    restart: always
+
+  php:
+    build:
+      context: ./php-fpm
+      dockerfile: Dockerfile
+    container_name: php-fpm
+    volumes:
+      - ${APP_ROOT}:/www/public_html/apps
+    restart: always
+    
+  redis:
+    image: redis:3.0
+    container_name: redis
+    ports:
+      - "6380:6380"
+        
+  mongo:
+    image: mongo:3.2
+    container_name: mongodb
+    ports:
+      - "27018:27018"
+    volumes:
+      - ./mongo/data:/var/lib/mongodb
+    restart: always
+    
+  percona:
+    image: percona:5.7
+    container_name: mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: ${DB_PASS}
+    ports:
+      - "3307:3307"
+    volumes:
+      - ./percona/data:/var/lib/mysql
+    restart: always
+    
+  rabbitmq:
+    build:
+      context: ./rabbitmq
+      dockerfile: Dockerfile
+    image: rabbitmq
+    container_name: rabbitmq
+    volumes:
+      - ./rabbitmq/data/log:/data/log
+      - ./rabbitmq/data/mnesia:/data/mnesia
+    ports:
+      - "5673:5673"
+      - "15673:15673"
